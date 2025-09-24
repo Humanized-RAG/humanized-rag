@@ -1,0 +1,5 @@
+fastapi
+uvicorn
+duckduckgo-search
+python-dotenv
+aiohttp
