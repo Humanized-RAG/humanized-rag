@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-
 import "./Home.css";
 
 export default function Home() {
@@ -85,7 +84,7 @@ export default function Home() {
             Try the Chatbot
           </button>
         </section>
-        
+
         <section id="contact" className="section">
           <h2>Contact Section</h2>
           <p>Put your contact details here.</p>

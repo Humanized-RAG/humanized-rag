@@ -77,49 +77,60 @@ html,
 }
 
 .message.bot .bot-line {
-  white-space: pre-wrap; 
-  line-height: 1.5;
+    white-space: pre-wrap;
+    line-height: 1.5;
 }
 
 .message.user .user-message {
-  white-space: pre-wrap;
-  font-family: 'Inter', sans-serif;
+    white-space: pre-wrap;
+    font-family: 'Inter', sans-serif;
 }
 
-/* pending style for bot placeholder */
 .message.bot.pending {
-  opacity: 0.9;
-  font-style: italic;
-  color: #bdbdbd;
+    opacity: 0.9;
+    font-style: italic;
+    color: #bdbdbd;
 }
 
-/* animated three dots for the thinking placeholder */
 .bot-thinking {
-  display: inline-flex;
-  gap: 6px;
-  align-items: center;
-  padding: 2px 5px;
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    padding: 2px 5px;
 }
 
 .bot-thinking span {
-  display: inline-block;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #888;
-  opacity: 0.75;
-  transform: translateY(0);
-  animation: bot-bounce 1s infinite ease-in-out;
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #888;
+    opacity: 0.75;
+    transform: translateY(0);
+    animation: bot-bounce 1s infinite ease-in-out;
 }
 
-.bot-thinking span:nth-child(2) { animation-delay: 0.15s; }
-.bot-thinking span:nth-child(3) { animation-delay: 0.3s; }
+.bot-thinking span:nth-child(2) {
+    animation-delay: 0.15s;
+}
+
+.bot-thinking span:nth-child(3) {
+    animation-delay: 0.3s;
+}
 
 @keyframes bot-bounce {
-  0%, 80%, 100% { transform: translateY(0); opacity: 0.6; }
-  40% { transform: translateY(-6px); opacity: 1; }
-}
+    0%,
+    80%,
+    100% {
+        transform: translateY(0);
+        opacity: 0.6;
+    }
 
+    40% {
+        transform: translateY(-6px);
+        opacity: 1;
+    }
+}
 
 /* -------- INPUT / TEXTAREA STYLES -------- */
 
@@ -140,17 +151,15 @@ html,
     border: 1px solid #444;
     background-color: transparent;
     transition: border-color 0.15s, background-color 0.15s;
-    min-height: 40px; 
+    min-height: 40px;
     box-sizing: border-box;
 }
 
-/* Active/has-text variant */
 .textarea-wrapper.has-text {
     background-color: #2a2a2a;
     border-color: #0b93f6;
 }
 
-/* The textarea itself */
 .textarea-wrapper textarea {
     width: 100%;
     border: 0;
@@ -159,18 +168,17 @@ html,
     background: transparent;
     color: white;
     font-size: 1rem;
-    line-height: 1.4; /* used for calculations in JS */
-    padding: 1rem 2rem; /* wrapper handles padding */
+    line-height: 1.4;
+    padding: 1rem 2rem;
     box-sizing: border-box;
-    overflow-y: hidden; /* we toggle to auto when needed */
+    overflow-y: hidden;
     white-space: pre-wrap;
     word-wrap: break-word;
-    min-height: 1.2rem; /* ensure at least one line worth of content */
+    min-height: 1.2rem;
     padding-right: 6px;
     font-family: 'Inter', sans-serif;
 }
 
-/* scrollbar styling inside the pill */
 .textarea-wrapper textarea::-webkit-scrollbar {
     width: 8px;
 }
@@ -181,18 +189,16 @@ html,
 }
 
 .textarea-wrapper textarea::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.08);
+    background: rgba(255, 255, 255, 0.08);
     border-radius: 8px;
     min-height: 20px;
 }
 
-/* Firefox scrollbar thin */
 .textarea-wrapper textarea {
     scrollbar-width: thin;
-    scrollbar-color: rgba(255,255,255,0.08) transparent;
+    scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
 }
 
-/* icons */
 .chat-input-icons {
     display: flex;
     gap: 1rem;
@@ -216,13 +222,44 @@ html,
 }
 
 @keyframes pulse {
-    0% { transform: scale(1.2); }
-    50% { transform: scale(1.4); }
-    100% { transform: scale(1.2); }
+    0% {
+        transform: scale(1.2);
+    }
+
+    50% {
+        transform: scale(1.4);
+    }
+
+    100% {
+        transform: scale(1.2);
+    }
 }
 
-.chat-input-icons img:hover.active { opacity: 1; transform: scale(1.2); }
-.chat-input-icons img.disabled { opacity: 0.3; cursor: default; }
+/* Reload spin animation */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.rotate {
+    animation: spin 0.8s linear;
+}
+
+
+.chat-input-icons img:hover.active {
+    opacity: 1;
+    transform: scale(1.2);
+}
+
+.chat-input-icons img.disabled {
+    opacity: 0.3;
+    cursor: default;
+}
 
 .loading-text {
     text-align: center;
@@ -236,24 +273,25 @@ html,
     color: #0b93f6;
 }
 
-/* Responsive adjustments for max height appearances (visual only) */
 @media (min-width: 1024px) {
     .chat-messages {
         padding: 2rem 4rem;
     }
+
     .chat-input-container {
         padding: 1.4rem 7rem;
     }
+
     .chat-input-icons img {
         width: 28px;
         height: 28px;
     }
+
     .chat-input-container textarea {
         padding: 1.3rem 3rem;
     }
 }
 
-/* For larger screens, keep wrapper width centered */
 @media (min-width: 1440px) {
     .chat-input-container {
         width: 80%;
