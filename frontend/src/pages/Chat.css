@@ -37,7 +37,7 @@ html,
 
 .message {
     max-width: 70%;
-    padding: 0.75rem 1rem;
+    padding: 0.5rem 1rem;
     border-radius: 1rem;
     word-wrap: break-word;
     position: relative;
@@ -47,6 +47,7 @@ html,
     align-self: flex-end;
     background-color: #0b93f6;
     color: white;
+    padding: 1px 16px;
 }
 
 .message.bot {
@@ -74,6 +75,51 @@ html,
     opacity: 1;
     transform: scale(1.2);
 }
+
+.message.bot .bot-line {
+  white-space: pre-wrap; 
+  line-height: 1.5;
+}
+
+.message.user .user-message {
+  white-space: pre-wrap;
+  font-family: 'Inter', sans-serif;
+}
+
+/* pending style for bot placeholder */
+.message.bot.pending {
+  opacity: 0.9;
+  font-style: italic;
+  color: #bdbdbd;
+}
+
+/* animated three dots for the thinking placeholder */
+.bot-thinking {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  padding: 2px 5px;
+}
+
+.bot-thinking span {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #888;
+  opacity: 0.75;
+  transform: translateY(0);
+  animation: bot-bounce 1s infinite ease-in-out;
+}
+
+.bot-thinking span:nth-child(2) { animation-delay: 0.15s; }
+.bot-thinking span:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes bot-bounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.6; }
+  40% { transform: translateY(-6px); opacity: 1; }
+}
+
 
 /* -------- INPUT / TEXTAREA STYLES -------- */
 

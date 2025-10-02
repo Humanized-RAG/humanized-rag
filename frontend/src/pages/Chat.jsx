@@ -6,56 +6,86 @@ import micIcon from "../../public/icons/mic.png";
 import reloadIcon from "../../public/icons/reload.png";
 import copyIcon from "../../public/icons/copy.png";
 import speakIcon from "../../public/icons/speak.png";
+import tickIcon from "../../public/icons/tick.png";
 import toast, { Toaster } from "react-hot-toast";
 
 export default function Chat() {
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState([]); // messages now have optional id and pending
   const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // kept for other UI uses (mic etc.)
   const [lastQuestion, setLastQuestion] = useState("");
   const [recording, setRecording] = useState(false);
   const [speakingIndex, setSpeakingIndex] = useState(null);
+  const [copiedIndex, setCopiedIndex] = useState(null); 
   const bottomRef = useRef();
   const textareaRef = useRef(null);
 
   const send = async (text) => {
-    if (!text) return;
+    if (!text || !text.trim()) return;
     setLastQuestion(text);
-    setMessages((m) => [...m, { sender: "user", text }]);
+
+    // create unique ids for messages
+    const userId = `u_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const placeholderId = `b_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+    const userMessage = { id: userId, sender: "user", text };
+    const botPlaceholder = { id: placeholderId, sender: "bot", text: "Thinking…", pending: true };
+
+    // append both user message and placeholder
+    setMessages((m) => [...m, userMessage, botPlaceholder]);
     setInput("");
     setLoading(true);
+
+    // ensure scrolled to placeholder
+    setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
 
     try {
       const res = await axios.post("http://localhost:8000/chat", { message: text });
       const answer = res.data.answer || "No answer.";
-      setMessages((m) => [...m, { sender: "bot", text: answer }]);
-      const u = new SpeechSynthesisUtterance(answer);
-      u.lang = "en-US";
-      speechSynthesis.speak(u);
+
+      // replace the placeholder with the answer (turn off pending)
+      setMessages((m) =>
+        m.map((msg) =>
+          msg.id === placeholderId ? { ...msg, text: answer, pending: false } : msg
+        )
+      );
+
+      // speak the answer
+      // const u = new SpeechSynthesisUtterance(answer);
+      // u.lang = "en-US";
+      // speechSynthesis.speak(u);
     } catch (err) {
-      setMessages((m) => [...m, { sender: "bot", text: "Error: could not reach backend." }]);
+      // replace placeholder with error
+      setMessages((m) =>
+        m.map((msg) =>
+          msg.id === placeholderId
+            ? { ...msg, text: "Error: could not reach backend.", pending: false }
+            : msg
+        )
+      );
     } finally {
       setLoading(false);
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
     }
   };
 
-  // Voice input unchanged
+  // Voice input unchanged (only small fix to use the final transcript)
   const startVoice = () => {
     const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
     recognition.lang = "en-US";
     recognition.interimResults = true;
     setRecording(true);
 
+    let finalTranscript = "";
+
     recognition.onresult = (e) => {
       let interimTranscript = "";
-      let finalTranscript = "";
       for (let i = 0; i < e.results.length; i++) {
         const transcript = e.results[i][0].transcript;
         if (e.results[i].isFinal) finalTranscript += transcript;
         else interimTranscript += transcript;
       }
-      setInput(finalTranscript + interimTranscript);
+      setInput((finalTranscript + interimTranscript).trimStart());
     };
 
     recognition.onerror = (e) => {
@@ -65,6 +95,7 @@ export default function Chat() {
 
     recognition.onend = () => {
       setRecording(false);
+      // use the latest input state (it was updated in onresult)
       if (input.trim() !== "") {
         send(input);
       }
@@ -73,9 +104,11 @@ export default function Chat() {
     recognition.start();
   };
 
-  const reloadQuestion = () => send(lastQuestion);
+  const reloadQuestion = () => {
+    if (lastQuestion) send(lastQuestion);
+  };
 
-  const copyMessage = (msg) => {
+  const copyMessage = (msg, i) => {
     navigator.clipboard.writeText(msg);
     toast.success("Copied message!", {
       position: "bottom-center",
@@ -85,80 +118,93 @@ export default function Chat() {
         fontSize: "14px",
       },
     });
+    setCopiedIndex(i); // set current message index to show tick
+    setTimeout(() => setCopiedIndex(null), 3000); // reset after 3 seconds
   };
 
-  const speakMessage = (msg, i) => {
+const speakMessage = (msg, msgIndex) => {
+  if (speechSynthesis.speaking) {
     speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(msg);
-    utterance.lang = "en-US";
-    const words = msg.split(" ");
-    utterance.onboundary = (event) => {
-      if (event.name === "word" || event.charIndex !== undefined) {
-        let charIndex = event.charIndex;
-        let beforeText = msg.slice(0, charIndex);
-        let wordIndex = beforeText.trim().split(/\s+/).length - 1;
-        setSpeakingIndex({ msgIndex: i, wordIndex });
+    setSpeakingIndex(null);
+    if (speakingIndex?.msgIndex === msgIndex) return; // stop if same message
+  }
+
+  const utterance = new SpeechSynthesisUtterance(msg);
+  utterance.lang = "en-US";
+
+  utterance.onboundary = (event) => {
+    if (event.name === "word" || event.charIndex !== undefined) {
+      const charIndex = event.charIndex;
+      const beforeText = msg.slice(0, charIndex);
+
+      // Split lines
+      const lines = msg.split("\n");
+      let lineIdx = 0;
+      let wordIdx = 0;
+      let count = 0;
+
+      for (let li = 0; li < lines.length; li++) {
+        const words = lines[li].split(/\s+/);
+        if (beforeText.split(/\s+/).length - 1 < count + words.length) {
+          lineIdx = li;
+          wordIdx = beforeText.split(/\s+/).length - 1 - count;
+          break;
+        }
+        count += words.length;
       }
-    };
-    utterance.onend = () => setSpeakingIndex(null);
-    speechSynthesis.speak(utterance);
+
+      setSpeakingIndex({ msgIndex, lineIdx, wordIdx });
+    }
   };
 
-  // Auto-resize logic
+  utterance.onend = () => setSpeakingIndex(null);
+
+  speechSynthesis.speak(utterance);
+};
+
+
+  // Auto-resize logic (unchanged)
   const adjustTextareaHeight = useCallback(() => {
     const ta = textareaRef.current;
     if (!ta) return;
-
-    // Reset height to measure correctly
     ta.style.height = "auto";
-
-    // Computed styles
     const cs = window.getComputedStyle(ta);
     let lineHeight = parseFloat(cs.lineHeight);
     if (Number.isNaN(lineHeight) || lineHeight === 0) {
-      // fallback
       lineHeight = parseFloat(cs.fontSize) * 1.2 || 20;
     }
-
     const paddingTop = parseFloat(cs.paddingTop) || 0;
     const paddingBottom = parseFloat(cs.paddingBottom) || 0;
     const borderTop = parseFloat(cs.borderTopWidth) || 0;
     const borderBottom = parseFloat(cs.borderBottomWidth) || 0;
-
-    // Breakpoints for max lines (user request)
     const width = window.innerWidth;
     const maxLines = width < 768 ? 6 : width < 1024 ? 9 : 12;
-
-    // Max height in px
     const maxHeight = Math.round(maxLines * lineHeight + paddingTop + paddingBottom + borderTop + borderBottom);
-
-    // Minimum height = one line
     const minHeight = Math.round(lineHeight + paddingTop + paddingBottom + borderTop + borderBottom);
-
-    // New height is content's scrollHeight clamped to maxHeight, but never below minHeight
     const contentHeight = ta.scrollHeight;
     const newHeight = Math.max(Math.min(contentHeight, maxHeight), minHeight);
-
     ta.style.height = `${newHeight}px`;
-
-    // toggle scrollbar
-    if (contentHeight > maxHeight) {
-      ta.style.overflowY = "auto";
-    } else {
-      ta.style.overflowY = "hidden";
-    }
+    if (contentHeight > maxHeight) ta.style.overflowY = "auto";
+    else ta.style.overflowY = "hidden";
   }, []);
 
-  // run on input change and mount
   useLayoutEffect(() => {
     adjustTextareaHeight();
   }, [input, adjustTextareaHeight]);
 
-  // update on resize
   useEffect(() => {
     window.addEventListener("resize", adjustTextareaHeight);
     return () => window.removeEventListener("resize", adjustTextareaHeight);
   }, [adjustTextareaHeight]);
+
+  useEffect(() => {
+  const handleBeforeUnload = () => {
+    speechSynthesis.cancel();
+  };
+  window.addEventListener("beforeunload", handleBeforeUnload);
+  return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+}, []);
+
 
   return (
     <div className="chat-container">
@@ -171,42 +217,62 @@ export default function Chat() {
 
       <header className="chat-header">Humanized RAG — Chat</header>
 
-      <div className="chat-messages">
-        {messages.map((m, i) => (
-          <div key={i} className="message-wrapper">
-            <div className={`message ${m.sender}`}>
-              {m.sender === "bot"
-                ? m.text.split(" ").map((word, wIdx) => (
-                    <span
-                      key={wIdx}
-                      className={
-                        speakingIndex &&
-                        speakingIndex.msgIndex === i &&
-                        speakingIndex.wordIndex === wIdx
-                          ? "highlighted-word"
-                          : ""
-                      }
-                    >
-                      {word}{" "}
-                    </span>
-                  ))
-                : m.text}
-            </div>
+     <div className="chat-messages">
+      {messages.map((m, i) => (
+        <div key={m.id ?? i} className="message-wrapper">
+          <div className={`message ${m.sender} ${m.pending ? "pending" : ""}`}>
+            {m.sender === "bot" ? (
+              m.pending ? (
+                <div className="bot-thinking" aria-live="polite">
+                  <span />
+                  <span />
+                  <span />
+                </div>
+              ) : (
+m.text.split("\n").map((line, lineIdx) => (
+  <div key={lineIdx} className="bot-line">
+    {line.split(" ").map((word, wIdx) => (
+      <span
+        key={wIdx}
+        className={
+          speakingIndex &&
+          speakingIndex.msgIndex === i &&
+          speakingIndex.lineIdx === lineIdx &&
+          speakingIndex.wordIdx === wIdx
+            ? "highlighted-word"
+            : ""
+        }
+      >
+        {word}{" "}
+      </span>
+    ))}
+  </div>
+))
 
-            {m.sender === "bot" && (
-              <div className="bot-actions">
-                <img src={reloadIcon} alt="reload" onClick={reloadQuestion} />
-                <img src={copyIcon} alt="copy" onClick={() => copyMessage(m.text)} />
-                <img src={speakIcon} alt="speak" onClick={() => speakMessage(m.text, i)} />
-              </div>
+              )
+            ) : (
+              <pre className="user-message">{m.text}</pre>
             )}
           </div>
-        ))}
-        <div ref={bottomRef} />
-      </div>
+
+          {m.sender === "bot" && !m.pending && (
+            <div className="bot-actions">
+              <img src={reloadIcon} alt="reload" onClick={reloadQuestion} />
+              <img
+                src={copiedIndex === i ? tickIcon : copyIcon} // <-- swap icon here
+                alt="copy"
+                onClick={() => copyMessage(m.text, i)}
+              />
+              <img src={speakIcon} alt="speak" onClick={() => speakMessage(m.text, i)} />
+            </div>
+          )}
+        </div>
+      ))}
+      <div ref={bottomRef} />
+    </div>
+
 
       <div className="chat-input-container">
-        {/* wrapper keeps border-radius intact while textarea scrolls inside */}
         <div className={`textarea-wrapper ${input ? "has-text" : ""}`}>
           <textarea
             ref={textareaRef}
@@ -214,7 +280,6 @@ export default function Chat() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
-              // Enter = send, Shift+Enter = newline
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 send(input);
@@ -240,7 +305,7 @@ export default function Chat() {
         </div>
       </div>
 
-      {loading && <div className="loading-text">Thinking…</div>}
+      {/* removed global loading-text; thinking is now shown inline as a placeholder message */}
     </div>
   );
 }
