@@ -40,16 +40,16 @@ export default function Home() {
       <header className="custom-header">
         <div className="header-logo">
           <div className="header-circle-logo"></div>
-          <span className="header-name">BLOB.</span>
+          <span className="header-name">HumiChat.</span>
         </div>
 
-        <div className="burger" onClick={() => setMenuOpen(!menuOpen)}>
+        {/* <div className="burger" onClick={() => setMenuOpen(!menuOpen)}>
           <div className={`line ${menuOpen ? "rotate1" : ""}`}></div>
           <div className={`line ${menuOpen ? "fade" : ""}`}></div>
           <div className={`line ${menuOpen ? "rotate2" : ""}`}></div>
-        </div>
+        </div> */}
 
-        <nav className={`nav-links ${menuOpen ? "open" : ""}`}>
+        {/* <nav className={`nav-links ${menuOpen ? "open" : ""}`}>
           {sections.map((id) => (
             <span
               key={id}
@@ -60,7 +60,7 @@ export default function Home() {
             </span>
           ))}
           <button className="login-btn">Login</button>
-        </nav>
+        </nav> */}
       </header>
 
       <main className="main-content">
@@ -85,7 +85,7 @@ export default function Home() {
           </button>
         </section>
 
-        <section id="contact" className="section">
+        {/* <section id="contact" className="section">
           <h2>Contact Section</h2>
           <p>Put your contact details here.</p>
         </section>
@@ -93,19 +93,19 @@ export default function Home() {
         <section id="help" className="section">
           <h2>Help Section</h2>
           <p>Put your help information here.</p>
-        </section>
+        </section> */}
       </main>
 
-      <footer className="footer">
+      {/* <footer className="footer">
         <div className="footer-content">
-          <p>© 2025 BLOB. All rights reserved.</p>
-          <div className="footer-links">
+          <p>© 2025 BLOB. All rights reserved.</p> */}
+          {/* <div className="footer-links">
             <span onClick={() => scrollToSection("home")}>Home</span>
             <span onClick={() => scrollToSection("contact")}>Contact</span>
             <span onClick={() => scrollToSection("help")}>Help</span>
-          </div>
-        </div>
-      </footer>
+          </div> */}
+        {/* </div>
+      </footer> */}
 
     </div>
   );

@@ -281,4 +281,24 @@ body {
     .login-btn {
         padding: 0.7rem 1.5rem;
     }
+
+    .logo-circle {
+    width: 160px;
+    height: 160px;
+    margin-top: 5rem;
+  
+}
+
+.logo-video {
+    width: 150px;
+    height: 150px;
+}
+}
+
+@media (max-width: 1024px) {
+        .logo-circle {
+   
+    margin-top: 5rem;
+  
+}
 }

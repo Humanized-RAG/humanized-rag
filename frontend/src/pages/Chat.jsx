@@ -190,7 +190,7 @@ export default function Chat() {
         }}
       />
 
-      <header className="chat-header">Humanized RAG — Chat</header>
+      <header className="chat-header">HumiChat</header>
 
       <div className="chat-messages">
         {messages.map((m, i) => (
